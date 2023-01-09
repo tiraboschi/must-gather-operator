@@ -1,0 +1,115 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: exaustive_job
+  namespace: exaustive_ns
+spec:
+  template:
+    spec:
+      backoffLimit: 6
+      containers:
+        - command:
+            - "/bin/bash"
+            - "-c"
+            - "/usr/local/bin/upload"
+          env:
+            - name: http_proxy
+              value: "http://myproxy"
+            - name: https_proxy
+              value: "https://my_http_proxy"
+            - name: no_proxy
+              value: "master-api"
+            - name: username
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: case-management-creds
+            - name: password
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: case-management-creds
+            - name: caseid
+              value: '02527285'
+            - name: must_gather_output
+              value: "/must-gather"
+            - name: must_gather_upload
+              value: "/must-gather-upload"
+          image: quay.io/redhat-cop/must-gather-operator:latest
+          name: upload
+          volumeMounts:
+            - mountPath: "/must-gather"
+              name: must-gather-output
+            - mountPath: "/must-gather-upload"
+              name: must-gather-upload
+      initContainers:
+        - command:
+            - "/usr/bin/gather"
+          image: quay.io/ocs-dev/ocs-must-gather
+          name: gather-0
+          volumeMounts:
+            - mountPath: "/must-gather"
+              name: must-gather-output
+        - command:
+            - "/usr/bin/gather"
+          image: "quay.io/openshift/origin-must-gather:latest"
+          name: gather-1
+          volumeMounts:
+            - mountPath: "/must-gather"
+              name: must-gather-output
+        - args:
+            - "--vms_details_1"
+            - "--vms_details_2"
+          command:
+            - "/usr/bin/gather-1"
+            - "/usr/bin/gather-2"
+          env:
+            - name: NS
+              value: ns1
+            - name: VM
+              valueFrom:
+                fieldRef:
+                  apiVersion: test-apiversion
+                  fieldPath: test-fieldpath
+                resourceFieldRef:
+                  containerName: test-containername
+                  resource: test-resource
+                  divisor: '0'
+                configMapKeyRef:
+                  name: test-cm-ref-1
+                  key: test-key-1
+                  optional: true
+                secretKeyRef:
+                  name: test-sec-ref-1
+                  key: test-key-2
+                  optional: false
+          envFrom:
+            - prefix: test-prefix-1
+              configMapRef:
+                name: test-cm-ref-1
+                optional: true
+              secretRef:
+                name: test-sec-ref-1
+                optional: false
+            - configMapRef:
+                name: test-cm-ref-2
+              secretRef:
+                name: test-sec-ref-2
+                optional: true
+            - prefix: test-prefix-2
+              secretRef:
+                optional: true
+          image: quay.io/kubevirt/must-gather:latest
+          name: gather-wp-0
+          volumeMounts:
+            - mountPath: "/must-gather"
+              name: must-gather-output
+          workingDir: test-wd-1
+      restartPolicy: OnFailure
+      serviceAccountName: must-gather-admin
+      volumes:
+        - emptyDir: {}
+          name: must-gather-output
+        - emptyDir: {}
+          name: must-gather-upload

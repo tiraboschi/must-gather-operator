@@ -40,6 +40,34 @@ spec:
 
 in this example we are using a specific service account (which must have cluster admin permissions as per must-gather requirements) and we are specifying a couple of additional must gather images to be run for the `kubevirt` and `ocs` subsystem. If not specified serviceAccountRef.Name will default to `default`. Also the standard must gather image: `quay.io/openshift/origin-must-gather:latest` is always added by default.
 
+In the case where one of the additional must-gather images requires also additional parameters or environmental variables, you can use:
+
+```yaml
+apiVersion: redhatcop.redhat.io/v1alpha1
+kind: MustGather
+metadata:
+  name: full-mustgather-with-params
+spec:
+  caseID: '02527285'
+  caseManagementAccountSecretRef:
+    name: case-management-creds
+  serviceAccountRef:
+    name: must-gather-admin
+  mustGatherImages:
+  - quay.io/ocs-dev/ocs-must-gather
+  mustGatherImagesWithParameters:
+    - image: quay.io/kubevirt/must-gather:latest
+      command:
+        - /usr/bin/gather
+      env:
+        - name: NS
+          value: ns1
+        - name: VM
+          value: testvm
+      args:
+        - --vms_details
+```
+
 ## Proxy Support
 
 The MustGather operator supports using a proxy. The proxy setting can be specified in the MustGather object. If not specified, the cluster default proxy setting will be used. Here is an example:

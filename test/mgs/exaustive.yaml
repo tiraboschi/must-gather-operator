@@ -1,0 +1,64 @@
+---
+apiVersion: redhatcop.redhat.io/v1alpha1
+kind: MustGather
+metadata:
+  name: exaustive_job
+  namespace: exaustive_ns
+spec:
+  caseID: '02527285'
+  caseManagementAccountSecretRef:
+    name: case-management-creds
+  serviceAccountRef:
+    name: must-gather-admin
+  mustGatherImages:
+    - quay.io/ocs-dev/ocs-must-gather
+  mustGatherImagesWithParameters:
+    - image: quay.io/kubevirt/must-gather:latest
+      name: gather-wp-0
+      command:
+        - "/usr/bin/gather-1"
+        - "/usr/bin/gather-2"
+      args:
+        - "--vms_details_1"
+        - "--vms_details_2"
+      workingDir: test-wd-1
+      envFrom:
+        - prefix: test-prefix-1
+          configMapRef:
+            name: test-cm-ref-1
+            optional: true
+          secretRef:
+            name: test-sec-ref-1
+            optional: false
+        - configMapRef:
+            name: test-cm-ref-2
+          secretRef:
+            name: test-sec-ref-2
+            optional: true
+        - prefix: test-prefix-2
+          secretRef:
+            optional: true
+      env:
+        - name: NS
+          value: ns1
+        - name: VM
+          valueFrom:
+            fieldRef:
+              apiVersion: test-apiversion
+              fieldPath: test-fieldpath
+            resourceFieldRef:
+              containerName: test-containername
+              resource: test-resource
+              divisor: '0'
+            configMapKeyRef:
+              name: test-cm-ref-1
+              key: test-key-1
+              optional: true
+            secretKeyRef:
+              name: test-sec-ref-1
+              key: test-key-2
+              optional: false
+  proxyConfig:
+    httpProxy: http://myproxy
+    httpsProxy: https://my_http_proxy
+    noProxy: master-api
