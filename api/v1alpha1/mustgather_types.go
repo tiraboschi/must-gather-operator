@@ -24,6 +24,52 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+// MustGatherImageWithParameters defines a must-gather image to run with custom parameters
+type MustGatherImageWithParameters struct {
+	// must-gather image name.
+	Image string `json:"image" protobuf:"bytes,2,name=image"`
+	// Entrypoint array. Not executed within a shell.
+	// The must-gather image's ENTRYPOINT is used if this is not provided.
+	// Variable references $(VAR_NAME) are expanded using the container's environment. If a variable
+	// cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced
+	// to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will
+	// produce the string literal "$(VAR_NAME)". Escaped references will never be expanded, regardless
+	// of whether the variable exists or not. Cannot be updated.
+	// More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
+	// +optional
+	Command []string `json:"command,omitempty" protobuf:"bytes,3,rep,name=command"`
+	// Arguments to the entrypoint.
+	// The must-gather image's CMD is used if this is not provided.
+	// Variable references $(VAR_NAME) are expanded using the container's environment. If a variable
+	// cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced
+	// to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will
+	// produce the string literal "$(VAR_NAME)". Escaped references will never be expanded, regardless
+	// of whether the variable exists or not. Cannot be updated.
+	// More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
+	// +optional
+	Args []string `json:"args,omitempty" protobuf:"bytes,4,rep,name=args"`
+	// must-gather images working directory.
+	// If not specified, the must-gather image runtime's default will be used, which
+	// might be configured in the must-gather image.
+	// Cannot be updated.
+	// +optional
+	WorkingDir string `json:"workingDir,omitempty" protobuf:"bytes,5,opt,name=workingDir"`
+	// List of sources to populate environment variables in the container.
+	// The keys defined within a source must be a C_IDENTIFIER. All invalid keys
+	// will be reported as an event when the container is starting. When a key exists in multiple
+	// sources, the value associated with the last source will take precedence.
+	// Values defined by an Env with a duplicate key will take precedence.
+	// Cannot be updated.
+	// +optional
+	EnvFrom []corev1.EnvFromSource `json:"envFrom,omitempty" protobuf:"bytes,19,rep,name=envFrom"`
+	// List of environment variables to set in the container.
+	// Cannot be updated.
+	// +optional
+	// +patchMergeKey=name
+	// +patchStrategy=merge
+	Env []corev1.EnvVar `json:"env,omitempty" patchStrategy:"merge" patchMergeKey:"name" protobuf:"bytes,7,rep,name=env"`
+}
+
 // MustGatherSpec defines the desired state of MustGather
 type MustGatherSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
@@ -46,6 +92,12 @@ type MustGatherSpec struct {
 	// +kubebuilder:validation:Optional
 	// +listType=set
 	MustGatherImages []string `json:"mustGatherImages,omitempty"`
+
+	// The list of must gather images to run with parameters, optional
+	// +kubebuilder:validation:Optional
+	// +listType=map
+	// +listMapKey=image
+	MustGatherImagesWithParameters []MustGatherImageWithParameters `json:"mustGatherImagesWithParameters,omitempty"`
 
 	// This represents the proxy configuration to be used. If left empty it will default to the cluster-level proxy configuration.
 	// +kubebuilder:validation:Optional
